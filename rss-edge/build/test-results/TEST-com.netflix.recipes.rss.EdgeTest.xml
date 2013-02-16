@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite errors="0" failures="0" hostname="lgmac-ppadmanabhan.corp.netflix.com" name="com.netflix.recipes.rss.EdgeTest" tests="0" time="0.071" timestamp="2013-02-16T10:47:39">
-  <properties />
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[SLF4J: This version of SLF4J requires log4j version 1.2.12 or later. See also http://www.slf4j.org/codes.html#log4j_version
-]]></system-err>
-</testsuite>
