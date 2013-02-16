@@ -15,9 +15,7 @@
  */
 package com.netflix.recipes.rss.jersey.resources;
 
-import com.netflix.recipes.rss.RSS;
 import com.netflix.recipes.rss.Subscriptions;
-import com.netflix.recipes.rss.impl.SubscriptionsImpl;
 import com.netflix.recipes.rss.manager.RSSManager;
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.*;
@@ -29,9 +27,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,8 +52,6 @@ public class MiddleTierResource {
     private static final StatsTimer getRSSStatsTimer = new StatsTimer(MonitorConfig.builder("MiddleTierRSS_getStatsTimer").build(), new StatsConfig.Builder().build());
     private static final StatsTimer addRSSStatsTimer = new StatsTimer(MonitorConfig.builder("MiddleTierRSS_addStatsTimer").build(), new StatsConfig.Builder().build());
     private static final StatsTimer delRSSStatsTimer = new StatsTimer(MonitorConfig.builder("MiddleTierRSS_delStatsTimer").build(), new StatsConfig.Builder().build());
-
-    private static final Random random = new Random();
 
     static {
         DefaultMonitorRegistry.getInstance().register(getRSSRequestCounter);
@@ -88,18 +81,12 @@ public class MiddleTierResource {
         try {
             getRSSRequestCounter.increment();
 
-            List<String> feedUrls = RSSManager.getInstance().getSubscribedUrls(user);
-            List<RSS> feeds = new ArrayList<RSS>(feedUrls.size());
-            for (String feedUrl: feedUrls) {
-                RSS rss = RSSManager.getInstance().fetchRSSFeed(feedUrl);
-                feeds.add(rss);
-            }
-
-            Subscriptions subscriptions = new SubscriptionsImpl(user, feeds);
+            Subscriptions subscriptions = RSSManager.getInstance().getSubscriptions(user);
             return Response.ok(subscriptions).build();
         } catch (Exception e) {
+            logger.error("Exception occurred when fetching subscriptions", e);
             getRSSErrorCounter.increment();
-            return Response.ok(e).build();
+            return Response.serverError().build();
         } finally {
             stopwatch.stop();
             getRSSStatsTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
@@ -119,12 +106,13 @@ public class MiddleTierResource {
         try {
             addRSSRequestCounter.increment();
             String decodedUrl = URLDecoder.decode(url, "UTF-8");
-            RSSManager.getInstance().subscribeUrl(user, decodedUrl);
+            RSSManager.getInstance().addSubscription(user, decodedUrl);
 
             return Response.ok().build();
         } catch (Exception e) {
+            logger.error("Exception occurred during subscription", e);
             addRSSErrorCounter.increment();
-            return Response.ok(e).build();
+            return Response.serverError().build();
         } finally {
             stopwatch.stop();
             addRSSStatsTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
@@ -144,12 +132,13 @@ public class MiddleTierResource {
         try {
             delRSSRequestCounter.increment();
             String decodedUrl = URLDecoder.decode(url, "UTF-8");
-            RSSManager.getInstance().unsubscribeUrl(user, decodedUrl);
+            RSSManager.getInstance().deleteSubscription(user, decodedUrl);
 
             return Response.ok().build();
         } catch (Exception e) {
+            logger.error("Exception occurred during un-subscription", e);
             delRSSErrorCounter.increment();
-            return Response.ok(e).build();
+            return Response.serverError().build();
         } finally {
             stopwatch.stop();
             delRSSStatsTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);

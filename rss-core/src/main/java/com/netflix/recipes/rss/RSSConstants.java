@@ -43,4 +43,16 @@ public class RSSConstants {
 
     // REST Entry points
     public static final String RSS_ENTRY_POINT = "/rss/user/" + DEFUALT_USER;
+
+    // RSS Store
+    public static final String RSS_STORE           = "rss.store";
+    public static final String RSS_STORE_CASSANDRA = "cassandra";
+    public static final String RSS_STORE_INMEMORY  = "inmemory";
+
+    // Cassandra meta data
+    public static final String CASSANDRA_HOST            = "cassandra.host";
+    public static final String CASSANDRA_PORT            = "cassandra.port";
+    public static final String CASSANDRA_MAXCONNSPERHOST = "cassandra.maxConnectionsPerHost";
+    public static final String CASSANDRA_KEYSPACE        = "cassandra.keyspace";
+    public static final String CASSANDRA_COLUMNFAMILY    = "cassandra.columnfamily";
 }

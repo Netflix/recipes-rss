@@ -1,0 +1,6 @@
+com.netflix.recipes.rss
+com.netflix.recipes.rss.impl
+com.netflix.recipes.rss.jersey.resources
+com.netflix.recipes.rss.manager
+com.netflix.recipes.rss.server
+com.netflix.recipes.rss.test.utils

@@ -28,11 +28,11 @@ public interface Subscriptions {
     /**
      * UUID of the user
      */
-    public String getUser();
+    String getUser();
     
     /**
      * List of the subscribed RSS feeds along with its contents 
      */
-    public List<RSS> getSubscriptions(); 
+    List<RSS> getSubscriptions();
     
 }

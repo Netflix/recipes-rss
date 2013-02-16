@@ -67,7 +67,7 @@ public class RSSConfiguration implements AppConfiguration {
 
 	@Override
 	public String getString(String key, String defaultValue) {
-		final DynamicStringProperty property = DynamicPropertyFactory .getInstance().getStringProperty(key, defaultValue);
+		final DynamicStringProperty property = DynamicPropertyFactory.getInstance().getStringProperty(key, defaultValue);
 		return property.get();
 	}
 

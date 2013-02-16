@@ -15,27 +15,19 @@
  */
 package com.netflix.recipes.rss.test.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.netflix.recipes.rss.util.RSSModule;
-import com.netflix.recipes.rss.server.MiddleTierServer;
 import com.google.common.io.Closeables;
 import com.google.inject.Injector;
 import com.netflix.governator.guice.LifecycleInjector;
 import com.netflix.governator.lifecycle.LifecycleManager;
+import com.netflix.recipes.rss.server.MiddleTierServer;
+import com.netflix.recipes.rss.util.RSSModule;
 
 /**
  * Middle Tier Test
  */
 public class EmbeddedMiddleTierForTests {
-    private static final Logger logger = LoggerFactory.getLogger(EmbeddedMiddleTierForTests.class);
-
     public  MiddleTierServer middleTierServer;
-    
-    public EmbeddedMiddleTierForTests() {
-    }
-    
+
     public void setUp() throws Exception {
     	System.setProperty("archaius.deployment.applicationId", "middletier");
     	System.setProperty("archaius.deployment.environment", "ci");
