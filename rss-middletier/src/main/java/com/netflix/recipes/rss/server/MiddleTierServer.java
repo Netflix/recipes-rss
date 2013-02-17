@@ -25,6 +25,7 @@ import com.netflix.recipes.rss.AppConfiguration;
 import com.netflix.recipes.rss.util.RSSModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.netflix.karyon.spi.PropertyNames;
 
 /**
  * @author Chris Fregly (chris@fregly.com)
@@ -32,9 +33,7 @@ import org.slf4j.LoggerFactory;
 public class MiddleTierServer extends BaseNettyServer {
     private static final Logger logger = LoggerFactory.getLogger(MiddleTierServer.class);
     
-    @Inject
-    public MiddleTierServer(AppConfiguration config) {
-    	super(config);
+    public MiddleTierServer() {
     }
     
     public void start() {
@@ -44,7 +43,7 @@ public class MiddleTierServer extends BaseNettyServer {
     }
 
     private void waitUntilFullyRegisteredWithEureka() {
-        // use applicationId as the vipAddress
+        // using applicationId as the vipAddress
         String vipAddress = System.getProperty("archaius.deployment.applicationId");
 
         InstanceInfo nextServerInfo = null;
@@ -54,8 +53,7 @@ public class MiddleTierServer extends BaseNettyServer {
                 .getDiscoveryClient()
                 .getNextServerFromEureka(vipAddress, false);
             } catch (Throwable e) {
-                System.out
-                .println("Waiting for service to register with eureka..");
+                logger.info("Waiting for service to register with eureka...");
 
                 try {
                     Thread.sleep(10000);
@@ -67,28 +65,12 @@ public class MiddleTierServer extends BaseNettyServer {
         
         logger.info("Registered middletier service with eureka: [{}]", nextServerInfo);
     }
-
-    private void unRegisterWithEureka() {
-        // Un register from eureka.
-        DiscoveryManager.getInstance().shutdownComponent();
-    }
-
-    @Override
-    public void close() {
-    	super.close();
-
-    	unRegisterWithEureka();
-    }
         
     public static void main(String args[]) throws Exception {
     	System.setProperty("archaius.deployment.applicationId", "middletier");
-
-    	Injector injector = LifecycleInjector.builder().withModules(new RSSModule()).createInjector();
-
-    	LifecycleManager lifecycleManager = injector.getInstance(LifecycleManager.class);
-    	lifecycleManager.start();
+    	System.setProperty(PropertyNames.SERVER_BOOTSTRAP_BASE_PACKAGES_OVERRIDE, "com.netflix");
     	
-    	MiddleTierServer middleTierServer = injector.getInstance(MiddleTierServer.class);
+    	MiddleTierServer middleTierServer = new MiddleTierServer();
     	middleTierServer.start();
     }
 }

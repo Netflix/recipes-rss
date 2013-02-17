@@ -16,6 +16,7 @@
 package com.netflix.recipes.rss.server;
 
 import com.google.inject.Inject;
+
 import com.google.inject.Injector;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.governator.guice.LifecycleInjector;
@@ -24,6 +25,7 @@ import com.netflix.recipes.rss.AppConfiguration;
 import com.netflix.recipes.rss.util.RSSModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.netflix.karyon.spi.PropertyNames;
 
 /**
  * Edge Server
@@ -34,28 +36,23 @@ public class EdgeServer extends BaseJettyServer {
 	private static final Logger logger = LoggerFactory
 			.getLogger(EdgeServer.class);
 
-	@Inject
-	public EdgeServer(AppConfiguration config) {
-		super(config);
-
-		// populate the eureka-specific properties
-		System.setProperty("eureka.client.props", ConfigurationManager
-				.getDeploymentContext().getApplicationId());
-		System.setProperty("eureka.environment", ConfigurationManager
-				.getDeploymentContext().getDeploymentEnvironment());
+	public EdgeServer() {
 	}
-
+	
 	public static void main(final String[] args) throws Exception {
 		System.setProperty("archaius.deployment.applicationId", "edge");
+    	System.setProperty(PropertyNames.SERVER_BOOTSTRAP_BASE_PACKAGES_OVERRIDE, "com.netflix");
 
-		Injector injector = LifecycleInjector.builder()
-				.withModules(new RSSModule()).createInjector();
+		String appId = ConfigurationManager.getDeploymentContext().getApplicationId();
+        String env = ConfigurationManager.getDeploymentContext().getDeploymentEnvironment();
+		
+		// populate the eureka-specific properties
+		System.setProperty("eureka.client.props", appId);
+		if (env != null) {
+			System.setProperty("eureka.environment", env);
+		}
 
-		LifecycleManager lifecycleManager = injector
-				.getInstance(LifecycleManager.class);
-		lifecycleManager.start();
-
-		EdgeServer edgeServer = injector.getInstance(EdgeServer.class);
+		EdgeServer edgeServer = new EdgeServer();
 		edgeServer.start();
 	}
 }

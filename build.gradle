@@ -47,6 +47,7 @@ subprojects {
         compile 'com.netflix.ribbon:ribbon-eureka:0.1.2'
         compile 'com.netflix.ribbon:ribbon-httpclient:0.1.2'
         compile 'com.netflix.governator:governator:1.0.3'
+		compile 'com.netflix.karyon:karyon-server:0.1.2'
         testCompile 'junit:junit:4.10'
         testCompile 'log4j:log4j:1.2.16'
 

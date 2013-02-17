@@ -38,6 +38,4 @@ public interface AppConfiguration extends Closeable {
 	 * @param value
 	 */
 	public void setOverrideProperty(String key, Object value);
-
-	public void start();
 }

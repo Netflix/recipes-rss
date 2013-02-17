@@ -26,6 +26,9 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 
+import com.netflix.governator.annotations.AutoBindSingleton;
+
+
 /**
  * RSSConfiguration follows a hierarchy as follows: <appId>-<env>.properties
  * (optional: <env>=local|dev|qa|prod) <appId>.properties (default values)
@@ -36,33 +39,12 @@ import java.io.IOException;
  * 
  * @author Chris Fregly (chris@fregly.com)
  */
-@Singleton
+@AutoBindSingleton(AppConfiguration.class)
 public class RSSConfiguration implements AppConfiguration {
 	private static final Logger logger = LoggerFactory.getLogger(RSSConfiguration.class);
 	private boolean initialized = false;
 
 	public RSSConfiguration() {
-		String appId = System.getProperty("archaius.deployment.applicationId");
-		String env = System.getProperty("archaius.deployment.environment");
-
-		if (Strings.isNullOrEmpty(appId)) {
-			throw new RuntimeException("*** Configuration warning: -Darchaius.deployment.applicationId has not been set. ***");
-		}
-
-		if (Strings.isNullOrEmpty(env)) {
-			env = System.getenv("APP_ENV");
-			logger.warn("Configuration warning: -Darchaius.deployment.environment=<local|dev|qa|prod> has not been set.  Trying env variable APP_ENV");
-
-			if (Strings.isNullOrEmpty(env)) {
-				throw new RuntimeException("*** Configuration error:   environment should be set by setting either -Darchaius.deployment.environment=<local|dev|qa|prod> or the environment variable APP_ENV. ***");
-			}
-
-			System.setProperty("archaius.deployment.environment", env);
-			logger.info("Set archaius.deployment.environment system property to [{}]", System.getProperty("archaius.deployment.environment"));
-		}
-
-		logger.info("ConfigurationManager.getDeploymentContext().getApplicationId() set to [{}]", ConfigurationManager.getDeploymentContext().getApplicationId());
-		logger.info("ConfigurationManager.getDeploymentContext().getDeploymentEnvironment() set to [{}]", ConfigurationManager.getDeploymentContext().getDeploymentEnvironment());
 	}
 
 	@Override
@@ -97,43 +79,7 @@ public class RSSConfiguration implements AppConfiguration {
 				.getConfigInstance()).setOverrideProperty(key, value);
 	}
 
-	@PostConstruct
-	@Override
-	public void start() {
-		initialize();
-	}
-
 	@Override
 	public void close() {
-	}
-
-	private void initialize() {
-		System.setProperty(DynamicPropertyFactory.ENABLE_JMX, "true");
-
-		logger.info(
-				"Initializing configuration environment for application [{}] and env [{}]",
-				ConfigurationManager.getDeploymentContext().getApplicationId(),
-				ConfigurationManager.getDeploymentContext()
-						.getDeploymentEnvironment());
-
-		try {
-			ConfigurationManager
-					.loadCascadedPropertiesFromResources(ConfigurationManager
-							.getDeploymentContext().getApplicationId());
-		} catch (IOException exc) {
-			logger.error(
-					"Cannot load cascaded properties for application [{}] and env [{}]",
-					ConfigurationManager.getDeploymentContext()
-							.getApplicationId(), ConfigurationManager
-							.getDeploymentContext().getDeploymentEnvironment());
-		}
-
-		logger.info(
-				"Initialized configuration environment for application [{}] and env [{}]",
-				ConfigurationManager.getDeploymentContext().getApplicationId(),
-				ConfigurationManager.getDeploymentContext()
-						.getDeploymentEnvironment());
-
-		initialized = true;
 	}
 }
