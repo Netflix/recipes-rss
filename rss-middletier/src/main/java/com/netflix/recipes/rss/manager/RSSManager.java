@@ -77,7 +77,7 @@ public class RSSManager {
         List<RSS> feeds = new ArrayList<RSS>(feedUrls.size());
         for (String feedUrl: feedUrls) {
             RSS rss = RSSManager.getInstance().fetchRSSFeed(feedUrl);
-            if (!rss.getItems().isEmpty()) {
+            if (rss.getItems() != null && !rss.getItems().isEmpty()) {
                 feeds.add(rss);
             }
         }

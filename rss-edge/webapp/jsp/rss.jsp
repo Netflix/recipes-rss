@@ -36,14 +36,14 @@
     <title>Netflix OSS RSS Reader</title>
 
     <!-- Le styles -->
-    <link href="/eureka/css/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap.css" rel="stylesheet">
     <style type="text/css">
         body {
             padding-top: 60px;
             padding-bottom: 40px;
         }
     </style>
-    <link href="/eureka/css/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -171,8 +171,8 @@
 ================================================== -->
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="http://code.jquery.com/jquery.js"></script>
-<script src="/eureka/css/bootstrap/js/bootstrap.js"></script>
-<script src="/eureka/css/bootstrap/js/bootstrap.min.js"></script>
+<script src="/bootstrap/js/bootstrap.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
 <script>
     $(function ()
     {
