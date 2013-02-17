@@ -17,6 +17,9 @@ package com.netflix.recipes.rss;
 
 import java.io.Closeable;
 
+/**
+ * @author Chris Fregly (chris@fregly.com)
+ */
 public interface AppConfiguration extends Closeable {
 
 	public String getString(String key, String defaultValue);

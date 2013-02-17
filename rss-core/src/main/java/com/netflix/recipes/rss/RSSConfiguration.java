@@ -34,7 +34,7 @@ import java.io.IOException;
  * JMX: All properties can be viewed and updated (on a per instance basis) here:
  * Config-com.netflix.config.jmx.BaseConfigMBean
  * 
- * @author cfregly
+ * @author Chris Fregly (chris@fregly.com)
  */
 @Singleton
 public class RSSConfiguration implements AppConfiguration {

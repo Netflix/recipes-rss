@@ -34,7 +34,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 
 /**
- * @author cfregly
+ * Base Jetty Server
+ * @author Chris Fregly (chris@fregly.com)
  */
 public class BaseJettyServer implements Closeable {
 	private static final Logger logger = LoggerFactory.getLogger(BaseJettyServer.class);

@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author cfregly
+ * @author Chris Fregly (chris@fregly.com)
  */
 public class MiddleTierServer extends BaseNettyServer {
     private static final Logger logger = LoggerFactory.getLogger(MiddleTierServer.class);

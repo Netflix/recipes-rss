@@ -34,7 +34,9 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 
 /**
- * Netty Server
+ * Base Netty Server
+ *
+ * @author Chris Fregly (chris@fregly.com)
  */
 public class BaseNettyServer implements Closeable {
 	private static final Logger logger = LoggerFactory
