@@ -17,6 +17,9 @@ package com.netflix.recipes.rss;
 
 import java.io.Closeable;
 
+/**
+ * @author Chris Fregly (chris@fregly.com)
+ */
 public interface AppConfiguration extends Closeable {
 
 	public String getString(String key, String defaultValue);
@@ -35,6 +38,4 @@ public interface AppConfiguration extends Closeable {
 	 * @param value
 	 */
 	public void setOverrideProperty(String key, Object value);
-
-	public void start();
 }

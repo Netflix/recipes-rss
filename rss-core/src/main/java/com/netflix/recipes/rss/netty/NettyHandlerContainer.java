@@ -29,7 +29,6 @@
  */
 package com.netflix.recipes.rss.netty;
 
-import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.core.header.InBoundHeaders;
 import com.sun.jersey.spi.container.ContainerRequest;
@@ -58,7 +57,6 @@ public class NettyHandlerContainer extends SimpleChannelUpstreamHandler {
 	private final WebApplication application;
 	private final String baseUri;
 
-	@Inject
 	NettyHandlerContainer(WebApplication application, ResourceConfig resourceConfig) {
 		this.application = application;
 		this.baseUri = (String) resourceConfig.getProperty(PROPERTY_BASE_URI);
