@@ -42,6 +42,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * NettyServer and Builder
+ * 
+ * @author Chris Fregly (chris@fregly.com)
  */
 public final class NettyServer implements Closeable {
 	private static final Logger logger = LoggerFactory.getLogger(NettyServer.class);

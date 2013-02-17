@@ -1,7 +1,5 @@
-/logs
 /bin
-/adapa-store
-/eclipse
 /.classpath
 /.project
+/.gradle
 /build
