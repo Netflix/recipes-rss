@@ -31,6 +31,7 @@ public class RSSConstants {
     public static final String HYSTRIX_RSS_ADD_COMMAND_KEY    = "RSSAdd";
     public static final String HYSTRIX_RSS_DEL_COMMAND_KEY    = "RSSDel";
     public static final String HYSTRIX_RSS_GET_COMMAND_KEY    = "RSSGet";
+    public static final String HYSTRIX_STREAM_PATH            = "/hystrix.stream";
 
 	public static final String MIDDLETIER_WEB_RESOURCE_ROOT_PATH = "middletier";
 	public static final String MIDDLETIER_WEB_RESOURCE_GET_PATH  = "get";
@@ -55,4 +56,8 @@ public class RSSConstants {
     public static final String CASSANDRA_MAXCONNSPERHOST = "cassandra.maxConnectionsPerHost";
     public static final String CASSANDRA_KEYSPACE        = "cassandra.keyspace";
     public static final String CASSANDRA_COLUMNFAMILY    = "cassandra.columnfamily";
+
+    // Jetty
+    public static final String JETTY_HTTP_PORT = "jetty.http.port";
+    public static final String WEBAPPS_DIR     = "rss-edge/webapp";
 }

@@ -9,6 +9,7 @@ RSS is a Netflix Recipes application demonstrating how all of the following Netf
 * [eureka] (https://github.com/Netflix/eureka)
 * [governator] (https://github.com/Netflix/governator)
 * [hystrix] (https://github.com/Netflix/hystrix)
+* [karyon] (https://github.com/Netflix/karyon)
 * [ribbon] (https://github.com/Netflix/ribbon)
 * [servo] (https://github.com/Netflix/servo)
 
