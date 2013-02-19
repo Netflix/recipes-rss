@@ -22,7 +22,6 @@ import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServl
 import com.netflix.karyon.server.KaryonServer;
 import com.netflix.recipes.rss.AppConfiguration;
 import com.netflix.recipes.rss.RSSConstants;
-import com.netflix.recipes.rss.util.InetAddressUtils;
 import org.apache.jasper.servlet.JspServlet;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
@@ -33,43 +32,41 @@ import java.io.Closeable;
 
 /**
  * Base Jetty Server
- * 
+ *
  * @author Chris Fregly (chris@fregly.com)
  */
 public class BaseJettyServer implements Closeable {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(BaseJettyServer.class);
-	
+
 	private final Server jettyServer;
 	private final KaryonServer karyonServer;
-	
-	private String host;
+
 	private int port;
-	
+
 	protected final Injector injector;
 	protected AppConfiguration config;
-	
+
 	public BaseJettyServer() {
 		System.setProperty(DynamicPropertyFactory.ENABLE_JMX, "true");
-	
+
 		this.karyonServer = new KaryonServer();
 		this.injector     = karyonServer.initialize();
 		this.jettyServer  = new Server();
 	}
-	
+
 	public void start() {
 		LoggingConfiguration.getInstance().configure();
-	
+
 		try {
 			karyonServer.start();
 		} catch (Exception exc) {
 			throw new RuntimeException("Cannot start karyon server ...", exc);
 		}
-	
+
 		config = injector.getInstance(AppConfiguration.class);
 		port   = config.getInt(RSSConstants.JETTY_HTTP_PORT, Integer.MIN_VALUE);
-		host   = InetAddressUtils.getBestReachableIp();
-	
+
 		final Context context = new Context(jettyServer, "/", Context.SESSIONS);
 		context.setResourceBase(RSSConstants.WEBAPPS_DIR);
 		context.setClassLoader(Thread.currentThread().getContextClassLoader());
@@ -77,17 +74,17 @@ public class BaseJettyServer implements Closeable {
 
 		// Enable hystrix.stream
 		context.addServlet(HystrixMetricsStreamServlet.class, RSSConstants.HYSTRIX_STREAM_PATH);
-	
+
 		final Server server = new Server(port);
 		server.setHandler(context);
-	
+
 		try {
 			server.start();
 		} catch (Exception exc) {
 			logger.error("Error starting jetty ...", exc);
 		}
 	}
-	
+
 	@Override
 	public void close() {
 		try {
