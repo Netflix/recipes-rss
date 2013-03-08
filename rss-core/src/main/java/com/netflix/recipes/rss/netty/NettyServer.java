@@ -56,7 +56,6 @@ public final class NettyServer implements Closeable {
 		InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
 
 		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-			@Override
 			public void uncaughtException(Thread thread, Throwable exc) {
 				logger.error("Thread Exc {}", thread.getName(), exc);
 				for (Throwable exc2 = exc; exc2 != null; exc2 = exc2.getCause()) {
@@ -234,7 +233,6 @@ public final class NettyServer implements Closeable {
 		}
 	}
 
-	@Override
 	public void close() {
 		channelGroup.close();
 	}

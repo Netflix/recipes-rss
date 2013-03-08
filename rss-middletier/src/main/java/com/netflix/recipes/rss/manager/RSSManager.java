@@ -15,13 +15,17 @@
  */
 package com.netflix.recipes.rss.manager;
 
-import com.netflix.client.ClientFactory;
-import com.netflix.config.DynamicPropertyFactory;
-import com.netflix.niws.client.http.HttpClientRequest;
-import com.netflix.niws.client.http.HttpClientResponse;
-import com.netflix.niws.client.http.RestClient;
-import com.netflix.recipes.rss.*;
-import com.netflix.recipes.rss.impl.*;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -32,15 +36,22 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
+import com.netflix.client.ClientFactory;
+import com.netflix.config.DynamicPropertyFactory;
+import com.netflix.karyon.spi.HealthCheckHandler;
+import com.netflix.niws.client.http.HttpClientRequest;
+import com.netflix.niws.client.http.HttpClientResponse;
+import com.netflix.niws.client.http.RestClient;
+import com.netflix.recipes.rss.RSS;
+import com.netflix.recipes.rss.RSSConstants;
+import com.netflix.recipes.rss.RSSItem;
+import com.netflix.recipes.rss.RSSStore;
+import com.netflix.recipes.rss.Subscriptions;
+import com.netflix.recipes.rss.impl.CassandraStoreImpl;
+import com.netflix.recipes.rss.impl.InMemoryStoreImpl;
+import com.netflix.recipes.rss.impl.RSSImpl;
+import com.netflix.recipes.rss.impl.RSSItemImpl;
+import com.netflix.recipes.rss.impl.SubscriptionsImpl;
 
 /**
  * RSS Manager that
@@ -50,7 +61,7 @@ import java.util.List;
  *      a) Cassandra using Astyanax (or)
  *      b) InMemoryStore
  */
-public class RSSManager {
+public class RSSManager implements HealthCheckHandler {
 
     private RSSStore store;
     private static final Logger logger = LoggerFactory.getLogger(RSSManager.class);
@@ -167,5 +178,9 @@ public class RSSManager {
             rssItems = new RSSImpl();
         }
         return rssItems;
+    }
+
+    public int getStatus() {
+        return store == null ? 500 : 200;
     }
 }

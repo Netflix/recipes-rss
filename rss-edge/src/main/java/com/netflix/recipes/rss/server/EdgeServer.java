@@ -15,16 +15,10 @@
  */
 package com.netflix.recipes.rss.server;
 
-import com.google.inject.Inject;
-
-import com.google.inject.Injector;
-import com.netflix.config.ConfigurationManager;
-import com.netflix.governator.guice.LifecycleInjector;
-import com.netflix.governator.lifecycle.LifecycleManager;
-import com.netflix.recipes.rss.AppConfiguration;
-import com.netflix.recipes.rss.util.RSSModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.netflix.config.ConfigurationManager;
 import com.netflix.karyon.spi.PropertyNames;
 
 /**

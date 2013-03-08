@@ -47,31 +47,26 @@ public class RSSConfiguration implements AppConfiguration {
 	public RSSConfiguration() {
 	}
 
-	@Override
 	public String getString(String key, String defaultValue) {
 		final DynamicStringProperty property = DynamicPropertyFactory.getInstance().getStringProperty(key, defaultValue);
 		return property.get();
 	}
 
-	@Override
 	public int getInt(String key, int defaultValue) {
 		final DynamicIntProperty property = DynamicPropertyFactory.getInstance().getIntProperty(key, defaultValue);
 		return property.get();
 	}
 
-	@Override
 	public long getLong(String key, int defaultValue) {
 		final DynamicLongProperty property = DynamicPropertyFactory.getInstance().getLongProperty(key, defaultValue);
 		return property.get();
 	}
 
-	@Override
 	public boolean getBoolean(String key, boolean defaultValue) {
 		final DynamicBooleanProperty property = DynamicPropertyFactory.getInstance().getBooleanProperty(key, defaultValue);
 		return property.get();
 	}
 
-	@Override
 	@VisibleForTesting
 	public void setOverrideProperty(String key, Object value) {
 		Preconditions.checkState(initialized, "Must initialize RSSConfiguration before use.");
@@ -79,7 +74,6 @@ public class RSSConfiguration implements AppConfiguration {
 				.getConfigInstance()).setOverrideProperty(key, value);
 	}
 
-	@Override
 	public void close() {
 	}
 }

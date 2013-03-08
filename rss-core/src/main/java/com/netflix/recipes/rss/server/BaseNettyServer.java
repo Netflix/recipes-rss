@@ -17,17 +17,14 @@ package com.netflix.recipes.rss.server;
 
 import java.io.Closeable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.netflix.recipes.rss.AppConfiguration;
-import com.netflix.recipes.rss.netty.NettyHandlerContainer;
-import com.netflix.recipes.rss.netty.NettyServer;
 import com.google.common.io.Closeables;
 import com.google.inject.Injector;
 import com.netflix.blitz4j.LoggingConfiguration;
+import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.karyon.server.KaryonServer;
+import com.netflix.recipes.rss.netty.NettyHandlerContainer;
+import com.netflix.recipes.rss.netty.NettyServer;
 import com.sun.jersey.api.container.ContainerFactory;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 
@@ -35,67 +32,56 @@ import com.sun.jersey.api.core.PackagesResourceConfig;
  * @author Chris Fregly (chris@fregly.com)
  */
 public class BaseNettyServer implements Closeable {
-	private static final Logger logger = LoggerFactory
-			.getLogger(BaseNettyServer.class);
+    static {
+        LoggingConfiguration.getInstance().configure();
+    }
 
-	public NettyServer nettyServer;
-	public final KaryonServer karyonServer;
+    public NettyServer nettyServer;
+    public final KaryonServer karyonServer;
 
-	public String host;
-	public int port;
+    public String host;
+    public int port;
 
-	protected final Injector injector;
+    protected final Injector injector;
 
-	protected AppConfiguration config;
+    //protected AppConfiguration config;
 
-	public BaseNettyServer() {
-		// This must be set before karyonServer.initialize() otherwise the
-		// archaius properties will not be available in JMX/jconsole
-		System.setProperty(DynamicPropertyFactory.ENABLE_JMX, "true");
+    public BaseNettyServer() {
 
-		this.karyonServer = new KaryonServer();
-		this.injector = karyonServer.initialize();		
-	}
+        // This must be set before karyonServer.initialize() otherwise the
+        // archaius properties will not be available in JMX/jconsole
+        System.setProperty(DynamicPropertyFactory.ENABLE_JMX, "true");
 
-	public void start() {
-		LoggingConfiguration.getInstance().configure();
-	
-		try {
-			karyonServer.start();
-		} catch (Exception exc) {
-			throw new RuntimeException("Cannot start karyon server.", exc);
-		}
-		
-		// Note:  after karyonServer.start(), the server will be marked as UP in eureka discovery.
-		//		  this is not ideal, but we need to call karyonServer.start() in order to start the Guice LifecyleManager 
-		//			to ultimately get the FluxConfiguration in the next step...
-		
-		this.config = injector.getInstance(AppConfiguration.class);
-		
-		// listen on any interface
-		this.host = config.getString("netty.http.host", "not-found-in-configuration");
-		this.port = config.getInt("netty.http.port", Integer.MIN_VALUE);
+        this.karyonServer = new KaryonServer();
+        this.injector = karyonServer.initialize();		
+    }
 
-		PackagesResourceConfig rcf = new PackagesResourceConfig(
-				config.getString("jersey.resources.package",
-						"not-found-in-configuration"));
+    public void start() {
+        this.host = ConfigurationManager.getConfigInstance().getString("netty.http.host", "not-found-in-configuration");
+        this.port = ConfigurationManager.getConfigInstance().getInt("netty.http.port", Integer.MIN_VALUE);
 
-		nettyServer = NettyServer
-				.builder()
-				.host(host)
-				.port(port)
-				.addHandler(
-						"jerseyHandler",
-						ContainerFactory.createContainer(
-								NettyHandlerContainer.class, rcf))
-				.numBossThreads(NettyServer.cpus)
-				.numWorkerThreads(NettyServer.cpus * 4).build();
-	}
+        final PackagesResourceConfig rcf = new PackagesResourceConfig(ConfigurationManager.getConfigInstance().getString("jersey.resources.package","not-found-in-configuration"));
 
-	@Override
-	public void close() {
-		Closeables.closeQuietly(nettyServer);
-		Closeables.closeQuietly(karyonServer);
-		LoggingConfiguration.getInstance().stop();
-	}
+        nettyServer = NettyServer
+                .builder()
+                .host(host)
+                .port(port)
+                .addHandler(
+                        "jerseyHandler",
+                        ContainerFactory.createContainer(
+                                NettyHandlerContainer.class, rcf))
+                                .numBossThreads(NettyServer.cpus)
+                                .numWorkerThreads(NettyServer.cpus * 4).build();
+        try {
+            karyonServer.start();
+        } catch (Exception exc) {
+            throw new RuntimeException("Cannot start karyon server.", exc);
+        }
+    }
+
+    public void close() {
+        Closeables.closeQuietly(nettyServer);
+        Closeables.closeQuietly(karyonServer);
+        LoggingConfiguration.getInstance().stop();
+    }
 }
