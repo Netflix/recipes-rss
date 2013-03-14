@@ -35,10 +35,10 @@ public class EdgeServer extends BaseJettyServer {
 	
 	public static void main(final String[] args) throws Exception {
 		System.setProperty("archaius.deployment.applicationId", "edge");
-    	System.setProperty(PropertyNames.SERVER_BOOTSTRAP_BASE_PACKAGES_OVERRIDE, "com.netflix");
+		System.setProperty(PropertyNames.SERVER_BOOTSTRAP_BASE_PACKAGES_OVERRIDE, "com.netflix");
 
 		String appId = ConfigurationManager.getDeploymentContext().getApplicationId();
-        String env = ConfigurationManager.getDeploymentContext().getDeploymentEnvironment();
+		String env = ConfigurationManager.getDeploymentContext().getDeploymentEnvironment();
 		
 		// populate the eureka-specific properties
 		System.setProperty("eureka.client.props", appId);
