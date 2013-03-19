@@ -31,3 +31,8 @@ Internal middletier service responsible for fetching RSS feeds and for persistin
 Documentation
 --------------
 Please see [wiki] (https://github.com/Netflix/recipes-rss/wiki) for detailed documentation.
+
+Communication
+--------------
+* Google Group: [netflix-oss-recipe] (https://groups.google.com/forum/#!forum/netflix-oss-recipe)
+* [GitHub Issues] (https://github.com/Netflix/recipes-rss/issues)
