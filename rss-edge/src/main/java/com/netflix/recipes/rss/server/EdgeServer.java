@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.config.ConfigurationManager;
 import com.netflix.karyon.spi.PropertyNames;
+import com.netflix.recipes.rss.RSSConstants;
 
 /**
  * Edge Server
@@ -31,22 +32,28 @@ public class EdgeServer extends BaseJettyServer {
 			.getLogger(EdgeServer.class);
 
 	public EdgeServer() {
+		super(RSSConstants.JETTY_HTTP_PORT, RSSConstants.WEBAPPS_DIR,
+				RSSConstants.HYSTRIX_STREAM_PATH);
 	}
-	
+
 	public static void main(final String[] args) throws Exception {
 		System.setProperty("archaius.deployment.applicationId", "edge");
-		System.setProperty(PropertyNames.SERVER_BOOTSTRAP_BASE_PACKAGES_OVERRIDE, "com.netflix");
+		System.setProperty(
+				PropertyNames.SERVER_BOOTSTRAP_BASE_PACKAGES_OVERRIDE,
+				"com.netflix");
 
-		String appId = ConfigurationManager.getDeploymentContext().getApplicationId();
-		String env = ConfigurationManager.getDeploymentContext().getDeploymentEnvironment();
-		
+		final String appId = ConfigurationManager.getDeploymentContext()
+				.getApplicationId();
+		final String env = ConfigurationManager.getDeploymentContext()
+				.getDeploymentEnvironment();
+
 		// populate the eureka-specific properties
 		System.setProperty("eureka.client.props", appId);
 		if (env != null) {
 			System.setProperty("eureka.environment", env);
 		}
 
-		EdgeServer edgeServer = new EdgeServer();
+		final EdgeServer edgeServer = new EdgeServer();
 		edgeServer.start();
 	}
 }
