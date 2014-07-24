@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-%>
+%><%@page contentType="text/html;charset=utf-8" %>
 <%@page import="com.netflix.hystrix.HystrixCommand"%>
 <%@page import="com.netflix.recipes.rss.hystrix.AddRSSCommand"%>
 <%@page import="com.netflix.recipes.rss.hystrix.DeleteRSSCommand"%>
