@@ -147,6 +147,8 @@ public class RSSManager implements HealthCheckHandler {
         
         RSS rssItems = null;
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        String FEATURE = "http://apache.org/xml/features/disallow-doctype-decl";
+        dbf.setFeature(FEATURE, true);        
         try {
             DocumentBuilder db = dbf.newDocumentBuilder();
             try {
