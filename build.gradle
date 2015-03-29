@@ -34,10 +34,10 @@ subprojects {
         compile 'com.netflix.netflix-commons:netflix-commons-util:0.1.1'
         compile 'javax.ws.rs:jsr311-api:1.1.1' 
         compile 'commons-collections:commons-collections:3.2.1'
-        compile 'com.sun.jersey:jersey-server:1.13'
-        compile 'com.sun.jersey:jersey-core:1.13'
-        compile 'com.sun.jersey:jersey-bundle:1.13'
-        compile 'com.sun.jersey.contribs:jersey-guice:1.13'
+        compile 'com.sun.jersey:jersey-server:1.19'
+        compile 'com.sun.jersey:jersey-core:1.19'
+        compile 'com.sun.jersey:jersey-bundle:1.19'
+        compile 'com.sun.jersey.contribs:jersey-guice:1.19'
         compile 'com.netflix.eureka:eureka-client:1.1.73'
         compile 'com.netflix.blitz4j:blitz4j:1.21'
         compile 'jetty:jetty:6.0.2'
@@ -79,7 +79,7 @@ project(':rss-middletier') {
         compile 'asm:asm-all:3.2'
         compile 'commons-io:commons-io:2.4'
         compile 'commons-configuration:commons-configuration:1.9'
-        compile 'com.sun.jersey:jersey-server:1.9.1'
+        compile 'com.sun.jersey:jersey-server:1.19'
     }
 
     jar {
