@@ -62,7 +62,7 @@ public class BaseNettyServer implements Closeable {
 
         final PackagesResourceConfig rcf = new PackagesResourceConfig(ConfigurationManager.getConfigInstance().getString("jersey.resources.package","not-found-in-configuration"));
 
-        nettyServer = NettyServer
+        NettyServer
                 .builder()
                 .host(host)
                 .port(port)

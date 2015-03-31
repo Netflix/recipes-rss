@@ -35,23 +35,33 @@ import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerResponse;
 import com.sun.jersey.spi.container.ContainerResponseWriter;
 import com.sun.jersey.spi.container.WebApplication;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.ChannelHandler.Sharable;
-import org.jboss.netty.handler.codec.http.*;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMessage;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Sharable
-public class NettyHandlerContainer extends SimpleChannelUpstreamHandler {
+public class NettyHandlerContainer extends ChannelInboundHandlerAdapter {
 	public static final String PROPERTY_BASE_URI = "com.sun.jersey.server.impl.container.netty.baseUri";
 
 	private final WebApplication application;
@@ -63,60 +73,61 @@ public class NettyHandlerContainer extends SimpleChannelUpstreamHandler {
 	}
 
 	private final static class Writer implements ContainerResponseWriter {
-		private final Channel channel;
-		private HttpResponse response;
+		private final ChannelHandlerContext ctx;
+		private DefaultFullHttpResponse response;
 
-		private Writer(Channel channel) {
-			this.channel = channel;
+		private Writer(ChannelHandlerContext ctx) {
+			this.ctx = ctx;
 		}
 
 		public OutputStream writeStatusAndHeaders(long contentLength, ContainerResponse cResponse) throws IOException {
-
-			response = new DefaultHttpResponse(HttpVersion.HTTP_1_0, HttpResponseStatus.valueOf(cResponse.getStatus()));
+			ByteBuf buffer = Unpooled.buffer();
+			response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_0, HttpResponseStatus.valueOf(cResponse
+					.getStatus()), buffer);
 			for (Map.Entry<String, List<Object>> e : cResponse.getHttpHeaders().entrySet()) {
 				List<String> values = new ArrayList<String>();
 				for (Object v : e.getValue())
 					values.add(ContainerResponse.getHeaderValue(v));
-				response.setHeader(e.getKey(), values);
+				response.headers().set(e.getKey(), values);
 			}
-			ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
-			response.setContent(buffer);
-			return new ChannelBufferOutputStream(buffer);
+			return new ByteBufOutputStream(buffer);
 		}
 
 		public void finish() throws IOException {
 			// Streaming is not supported. Entire response will be written
 			// downstream once finish() is called.
-			channel.write(response).addListener(ChannelFutureListener.CLOSE);
+			final ChannelFuture f = ctx.writeAndFlush(response);
+			f.addListener(ChannelFutureListener.CLOSE);
 		}
 	}
 
 	@Override
-	public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
-		HttpRequest request = (HttpRequest) e.getMessage();
-		String base = getBaseUri(request);
-		URI baseUri = new URI(base);
-		URI requestUri = new URI(base.substring(0, base.length() - 1) + request.getUri());
-		ContainerRequest cRequest = new ContainerRequest(application, request
-				.getMethod().getName(), baseUri, requestUri,
-				getHeaders(request), new ChannelBufferInputStream(
-						request.getContent()));
-		application.handleRequest(cRequest, new Writer(e.getChannel()));
+	public void channelRead(ChannelHandlerContext ctx, Object msg) throws URISyntaxException, IOException {
+		if (msg instanceof FullHttpRequest) {
+			FullHttpRequest httpRequest = (FullHttpRequest) msg;
+			String base = getBaseUri(httpRequest);
+			URI baseUri = new URI(base);
+			URI requestUri = new URI(base.substring(0, base.length() - 1) + httpRequest.getUri());
+			ContainerRequest cRequest = new ContainerRequest(application, httpRequest.getMethod().name(), baseUri,
+					requestUri, getHeaders(httpRequest), new ByteBufInputStream(httpRequest.content()));
+			application.handleRequest(cRequest, new Writer(ctx));
+		}
 	}
 
-	private String getBaseUri(HttpRequest request) {
+	private String getBaseUri(HttpMessage httpMessage) {
 		if (baseUri != null) {
 			return baseUri;
 		}
-
-		return "http://" + request.getHeader(HttpHeaders.Names.HOST) + "/";
+		return "http://" + HttpHeaders.getHost(httpMessage) + "/";
 	}
 
-	private InBoundHeaders getHeaders(HttpRequest request) {
+	private InBoundHeaders getHeaders(FullHttpRequest httpRequest) {
 		InBoundHeaders headers = new InBoundHeaders();
-		for (String name : request.getHeaderNames()) {
-			headers.put(name, request.getHeaders(name));
+		HttpHeaders httpHeaders = httpRequest.headers();
+		for (String name : httpHeaders.names()) {
+			headers.put(name, httpHeaders.getAll(name));
 		}
 		return headers;
 	}
+
 }

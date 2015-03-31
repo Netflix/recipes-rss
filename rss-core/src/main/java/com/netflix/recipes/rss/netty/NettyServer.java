@@ -17,28 +17,33 @@ package com.netflix.recipes.rss.netty;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.netflix.recipes.rss.util.DescriptiveThreadFactory;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
-import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
-import org.jboss.netty.handler.execution.ExecutionHandler;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.Slf4JLoggerFactory;
 
 import java.io.Closeable;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * NettyServer and Builder
@@ -50,7 +55,7 @@ public final class NettyServer implements Closeable {
 
 	public static final int cpus = Runtime.getRuntime().availableProcessors();
 
-	private ChannelGroup channelGroup = new DefaultChannelGroup();
+	private ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
 	static {
 		InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
@@ -64,14 +69,6 @@ public final class NettyServer implements Closeable {
 				}
 			}
 		});
-	}
-
-	public String getListenHost() {
-		return ((InetSocketAddress) channelGroup.find(1).getLocalAddress()).getHostName();
-	}
-
-	public int getListenPort() {
-		return ((InetSocketAddress) channelGroup.find(1).getLocalAddress()).getPort();
 	}
 
 	public void addChannel(Channel channel) {
@@ -90,9 +87,6 @@ public final class NettyServer implements Closeable {
 		private int port = 0; // default is any port
 
 		private Map<String, ChannelHandler> handlers = Maps.newHashMap();
-
-		private ChannelHandler encoder = new HttpResponseEncoder();
-		private ChannelHandler decoder = new HttpRequestDecoder();
 
 		private int numBossThreads = cpus; // IO boss threads
 		private int numWorkerThreads = cpus * 4; // worker threads
@@ -113,16 +107,6 @@ public final class NettyServer implements Closeable {
 			return this;
 		}
 
-		public Builder encoder(ChannelHandler encoder) {
-			this.encoder = encoder;
-			return this;
-		}
-
-		public Builder decoder(ChannelHandler decoder) {
-			this.decoder = decoder;
-			return this;
-		}
-
 		public Builder numBossThreads(int numBossThreads) {
 			this.numBossThreads = numBossThreads;
 			return this;
@@ -136,100 +120,33 @@ public final class NettyServer implements Closeable {
 		/**
 		 * Builds and starts netty
 		 */
-		public NettyServer build() {
-			PipelineFactory factory = new PipelineFactory(handlers, encoder,
-					decoder, numBossThreads);
+		public ChannelFuture build() {
+			EventLoopGroup bossGroup = new NioEventLoopGroup(this.numBossThreads);
+			EventLoopGroup workerGroup = new NioEventLoopGroup(this.numWorkerThreads);
+			
+			ServerBootstrap serverBootstrap = new ServerBootstrap();
 
-			ThreadPoolExecutor bossPool = new ThreadPoolExecutor(
-					numBossThreads, numBossThreads, 60, TimeUnit.SECONDS,
-					new LinkedBlockingQueue<Runnable>(),
-					new DescriptiveThreadFactory("Boss-Thread"));
+			serverBootstrap.option(ChannelOption.SO_REUSEADDR, true)
+					.option(ChannelOption.SO_KEEPALIVE, true)
+					.childOption(ChannelOption.SO_KEEPALIVE, true);
 
-			ThreadPoolExecutor workerPool = new ThreadPoolExecutor(
-					numWorkerThreads, numWorkerThreads, 60, TimeUnit.SECONDS,
-					new LinkedBlockingQueue<Runnable>(),
-					new DescriptiveThreadFactory("Worker-Thread"));
+			serverBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
+					.childHandler(new ChannelInitializer<SocketChannel>() {
+						@Override
+						protected void initChannel(SocketChannel ch) throws Exception {
+							ch.pipeline().addLast(new HttpResponseEncoder());
+							ch.pipeline().addLast(new HttpRequestDecoder());
+							ch.pipeline().addLast(new HttpObjectAggregator(1048576));
+							for (String name : handlers.keySet()) {
+								ch.pipeline().addLast(handlers.get(name));
+							}
+						}
+					});
 
-			ChannelFactory nioServer = new NioServerSocketChannelFactory(
-					bossPool, workerPool, numWorkerThreads);
-
-			ServerBootstrap serverBootstrap = new ServerBootstrap(nioServer);
-			serverBootstrap.setOption("reuseAddress", true);
-			serverBootstrap.setOption("keepAlive", true);
-			serverBootstrap.setPipelineFactory(factory);
-
-			Channel serverChannel = serverBootstrap.bind(new InetSocketAddress(
-					host, port));
+			ChannelFuture serverChannelFuture = serverBootstrap.bind(new InetSocketAddress(host, port));
 			logger.info("Started netty server {}:{}", host, port);
 
-			NettyServer server = new NettyServer();
-			server.addChannel(serverChannel);
-
-			return server;
-		}
-	}
-
-	public static class PipelineFactory implements ChannelPipelineFactory {
-		static final String CHANNEL_HANDLERS = "channelHandlers";
-		static final String ENCODER_NAME = "encoder";
-		static final String DECODER_NAME = "decoder";
-
-		final ChannelHandler executionHandler;
-		final Map<String, ChannelHandler> handlers;
-
-		final ChannelHandler encoder;
-		final ChannelHandler decoder;
-
-		public PipelineFactory(Map<String, ChannelHandler> handlers,
-				ChannelHandler encoder, ChannelHandler decoder, int numThreads) {
-
-			this.handlers = handlers;
-			this.encoder = encoder;
-			this.decoder = decoder;
-
-			if (numThreads != 0) {
-				ThreadPoolExecutor executorThreadPool = new ThreadPoolExecutor(
-						NettyServer.cpus, NettyServer.cpus * 4, 60,
-						TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
-						new DescriptiveThreadFactory("Executor-Thread"));
-
-				this.executionHandler = new ExecutionHandler(executorThreadPool);
-			} else {
-				this.executionHandler = null;
-			}
-		}
-
-		public ChannelPipeline getPipeline() throws Exception {
-			ChannelPipeline pipeline = Channels.pipeline();
-			pipeline.addLast("executionHandler", executionHandler);
-			pipeline.addLast(DECODER_NAME, decoder);
-			pipeline.addLast(ENCODER_NAME, encoder);
-
-			for (Entry<String, ChannelHandler> handler : handlers.entrySet()) {
-				pipeline.addLast(handler.getKey(), handler.getValue());
-			}
-
-			return pipeline;
-		}
-	}
-
-	public static class ClientPipelineFactory extends PipelineFactory {
-		public ClientPipelineFactory(Map<String, ChannelHandler> handlers,
-				ChannelHandler encoder, ChannelHandler decoder) {
-
-			super(handlers, encoder, decoder, 0);
-		}
-
-		public ChannelPipeline getPipeline() throws Exception {
-			ChannelPipeline pipeline = Channels.pipeline();
-			pipeline.addLast(DECODER_NAME, decoder);
-			pipeline.addLast(ENCODER_NAME, encoder);
-
-			for (Entry<String, ChannelHandler> handler : handlers.entrySet()) {
-				pipeline.addLast(handler.getKey(), handler.getValue());
-			}
-
-			return pipeline;
+			return serverChannelFuture;
 		}
 	}
 
