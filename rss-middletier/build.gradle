@@ -1,0 +1,18 @@
+dependencies {
+    compile project(':rss-core')
+    compile 'org.apache.httpcomponents:httpclient:4.1.2'
+    compile 'com.netflix.astyanax:astyanax:1.56.16'
+    compile 'asm:asm-all:3.2'
+    compile 'commons-io:commons-io:2.4'
+    compile 'commons-configuration:commons-configuration:1.9'
+    compile 'com.sun.jersey:jersey-server:1.9.1'
+}
+
+jar {
+    from(configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }) {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+    }
+    manifest { attributes 'Main-Class': 'com.netflix.recipes.rss.server.MiddleTierServer' }
+}
