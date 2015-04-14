@@ -34,6 +34,9 @@ import java.net.URI;
  * Calls the middle tier Get RSS entry point
  */
 public class GetRSSCommand extends HystrixCommand<String> {
+
+	private String username = null;
+
 	public GetRSSCommand() {
         super (
             Setter.withGroupKey(
@@ -44,6 +47,17 @@ public class GetRSSCommand extends HystrixCommand<String> {
         );
 	}
 
+	public GetRSSCommand(String username) {
+        super (
+            Setter.withGroupKey(
+                HystrixCommandGroupKey.Factory.asKey(RSSConstants.HYSTRIX_RSS_GET_GROUP))
+			.andCommandKey(HystrixCommandKey.Factory.asKey(RSSConstants.HYSTRIX_RSS_GET_COMMAND_KEY))
+			.andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(RSSConstants.HYSTRIX_RSS_THREAD_POOL)
+				)
+			);
+		this.username = username;
+	}
+
 	@Override
 	protected String run() {
 		try {
@@ -51,25 +65,37 @@ public class GetRSSCommand extends HystrixCommand<String> {
 			// configuration specified in the edge.properties file
 			RestClient client = (RestClient) ClientFactory.getNamedClient(RSSConstants.MIDDLETIER_REST_CLIENT);
 
-			HttpClientRequest request = HttpClientRequest
+			HttpClientRequest request;
+			if (this.username == null) {
+				request = HttpClientRequest
 					.newBuilder()
 					.setVerb(Verb.GET)
 					.setUri(new URI("/"
-							+ RSSConstants.MIDDLETIER_WEB_RESOURCE_ROOT_PATH
-							+ RSSConstants.RSS_ENTRY_POINT)
-                    )
+								+ RSSConstants.MIDDLETIER_WEB_RESOURCE_ROOT_PATH
+								+ RSSConstants.RSS_ENTRY_POINT)
+						   )
 					.build();
+			} else {
+				request = HttpClientRequest
+					.newBuilder()
+					.setVerb(Verb.GET)
+					.setUri(new URI("/"
+								+ RSSConstants.MIDDLETIER_WEB_RESOURCE_ROOT_PATH
+								+ RSSConstants.RSS_ENTRY_POINT.replaceAll("rss/user/default","rss/user/"+this.username))
+								)
+							.build();
+			}
 			HttpClientResponse response = client.executeWithLoadBalancer(request);
 
 			return IOUtils.toString(response.getRawEntity(), Charsets.UTF_8);
-		} catch (Exception exc) {
-			throw new RuntimeException("Exception", exc);
-		}
+			} catch (Exception exc) {
+				throw new RuntimeException("Exception", exc);
+			}
 	}
 
 	@Override
 	protected String getFallback() {
-        // Empty json
+		// Empty json
 		return "{}";
 	}
 }
