@@ -22,21 +22,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 
@@ -55,8 +51,6 @@ public final class NettyServer implements Closeable {
 
 	public static final int cpus = Runtime.getRuntime().availableProcessors();
 
-	private ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-
 	static {
 		InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
 
@@ -69,10 +63,6 @@ public final class NettyServer implements Closeable {
 				}
 			}
 		});
-	}
-
-	public void addChannel(Channel channel) {
-		channelGroup.add(channel);
 	}
 
 	/**
@@ -123,14 +113,15 @@ public final class NettyServer implements Closeable {
 		public ChannelFuture build() {
 			EventLoopGroup bossGroup = new NioEventLoopGroup(this.numBossThreads);
 			EventLoopGroup workerGroup = new NioEventLoopGroup(this.numWorkerThreads);
-			
+
 			ServerBootstrap serverBootstrap = new ServerBootstrap();
 
 			serverBootstrap.option(ChannelOption.SO_REUSEADDR, true)
 					.option(ChannelOption.SO_KEEPALIVE, true)
 					.childOption(ChannelOption.SO_KEEPALIVE, true);
 
-			serverBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
+			serverBootstrap.group(bossGroup, workerGroup)
+					.channel(NioServerSocketChannel.class)
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						@Override
 						protected void initChannel(SocketChannel ch) throws Exception {
@@ -151,7 +142,6 @@ public final class NettyServer implements Closeable {
 	}
 
 	public void close() {
-		channelGroup.close();
 	}
 
 	private NettyServer() {
