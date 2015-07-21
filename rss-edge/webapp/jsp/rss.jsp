@@ -71,28 +71,51 @@
 
 <%
     // Delete a RSS feed
+    String username = request.getParameter("username");
     String delFeedUrl = request.getParameter("delFeedUrl");
     if (delFeedUrl != null) {
-        HystrixCommand<String> deleteCommand = new DeleteRSSCommand(delFeedUrl);
+		HystrixCommand<String> deleteCommand;
+		if (username == null) {
+        	deleteCommand = new DeleteRSSCommand(delFeedUrl);
+			username = "default";
+		} else {
+        	deleteCommand = new DeleteRSSCommand(username,delFeedUrl);
+		}
         Future<String> future = deleteCommand.queue();
         String responseString = future.get();
-        response.sendRedirect("/jsp/rss.jsp");
+        response.sendRedirect("/jsp/rss.jsp?username="+username);
     }
 
     // Add a RSS feed
     String url = request.getParameter("url");
     if (url != null) {
+		HystrixCommand<String> addCommand;
         url = URLEncoder.encode(url, "UTF-8");
-        HystrixCommand<String> addCommand = new AddRSSCommand(url);
+		if (username == null) {
+        	addCommand = new AddRSSCommand(url);
+			username = "default";
+		} else {
+        	addCommand = new AddRSSCommand(username,url);
+		}
         Future<String> future = addCommand.queue();
         String responseString = future.get();
-        response.sendRedirect("/jsp/rss.jsp");
+        response.sendRedirect("/jsp/rss.jsp?username="+username);
     }
 
     // Get RSS feeds
-    HystrixCommand<String> getCommand = new GetRSSCommand();
+	HystrixCommand<String> getCommand;
+	if (username == null) {
+    	getCommand = new GetRSSCommand();
+	} else {
+    	getCommand = new GetRSSCommand(username);
+	}
     Future<String> future = getCommand.queue();
     String responseString = future.get();
+	boolean errorOccurred = false;
+	if (responseString.equals("An error occurred")) {
+		errorOccurred = true;
+		responseString = "{}";
+	}
 
     // When a user has only 1 subcription, middle tier returns a jsonobject instead of an array
     final JSONObject jo = new JSONObject(responseString);
@@ -103,7 +126,7 @@
         } else {
             subscriptions = jo.getJSONArray("subscriptions");
         }
-    }
+	}
 
     // Compute the number of rows
     int numFeeds  = subscriptions.length();
@@ -119,7 +142,13 @@
         visibility:visible;
     }
 </style>
-
+<%
+if (errorOccurred) {
+%>
+	An error occurred.
+<%
+}
+%>
 <div class="container">
     <%
         int index = 0;
