@@ -101,7 +101,6 @@ public class DeleteRSSCommand extends HystrixCommand<String> {
 
 	@Override
 	protected String getFallback() {
-		// Empty json
-		return "{}";
+		return "An error occurred while deleting feed";
 	}
 }

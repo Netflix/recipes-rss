@@ -83,6 +83,9 @@
 		}
         Future<String> future = deleteCommand.queue();
         String responseString = future.get();
+		if (responseString.equals("An error occurred while deleting feed")) {
+			response.sendError(500, "An error occurred while deleting feed");
+		}
         response.sendRedirect("/jsp/rss.jsp?username="+username);
     }
 
@@ -99,6 +102,9 @@
 		}
         Future<String> future = addCommand.queue();
         String responseString = future.get();
+		if (responseString.equals("An error occurred while adding feed")) {
+			response.sendError(500, "An error occurred while adding feed");
+		}
         response.sendRedirect("/jsp/rss.jsp?username="+username);
     }
 
@@ -111,10 +117,8 @@
 	}
     Future<String> future = getCommand.queue();
     String responseString = future.get();
-	boolean errorOccurred = false;
-	if (responseString.equals("An error occurred")) {
-		errorOccurred = true;
-		responseString = "{}";
+	if (responseString.equals("An error occurred while getting feed")) {
+		response.sendError(500, "An error occurred while getting feed");
 	}
 
     // When a user has only 1 subcription, middle tier returns a jsonobject instead of an array
@@ -142,13 +146,7 @@
         visibility:visible;
     }
 </style>
-<%
-if (errorOccurred) {
-%>
-	An error occurred.
-<%
-}
-%>
+
 <div class="container">
     <%
         int index = 0;

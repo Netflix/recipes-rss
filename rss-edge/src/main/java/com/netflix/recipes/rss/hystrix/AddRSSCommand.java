@@ -101,7 +101,6 @@ public class AddRSSCommand extends HystrixCommand<String> {
 
 	@Override
 	protected String getFallback() {
-		// Empty json
-		return "{}";
+		return "An error occurred while adding feed";
 	}
 }
