@@ -29,7 +29,6 @@ import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet;
 import com.netflix.karyon.server.KaryonServer;
-import com.netflix.recipes.rss.RSSConstants;
 
 /**
  * Base Jetty Server
@@ -48,8 +47,19 @@ public class BaseJettyServer implements Closeable {
 
     protected final Injector injector;
 
-    public BaseJettyServer() {
-        System.setProperty(DynamicPropertyFactory.ENABLE_JMX, "true");
+	private final String portPropertyName;
+
+	private String webAppsDir;
+
+	private String hystrixStreamPath;
+
+    public BaseJettyServer(String portPropertyName, String webAppsDir, String hystrixStreamPath) {
+
+    	System.setProperty(DynamicPropertyFactory.ENABLE_JMX, "true");
+
+    	this.portPropertyName = portPropertyName;
+		this.webAppsDir = webAppsDir;
+		this.hystrixStreamPath = hystrixStreamPath;
 
         this.karyonServer = new KaryonServer();
         this.injector     = karyonServer.initialize();
@@ -58,15 +68,15 @@ public class BaseJettyServer implements Closeable {
 
     public void start() {
 
-        final int port   = ConfigurationManager.getConfigInstance().getInt(RSSConstants.JETTY_HTTP_PORT, Integer.MIN_VALUE);
+        final int port   = ConfigurationManager.getConfigInstance().getInt(portPropertyName, Integer.MIN_VALUE);
 
         final Context context = new Context(jettyServer, "/", Context.SESSIONS);
-        context.setResourceBase(RSSConstants.WEBAPPS_DIR);
+        context.setResourceBase(webAppsDir);
         context.setClassLoader(Thread.currentThread().getContextClassLoader());
         context.addServlet(JspServlet.class, "*.jsp");
 
         // Enable hystrix.stream
-        context.addServlet(HystrixMetricsStreamServlet.class, RSSConstants.HYSTRIX_STREAM_PATH);
+        context.addServlet(HystrixMetricsStreamServlet.class, hystrixStreamPath);
 
         final Server server = new Server(port);
         server.setHandler(context);
