@@ -74,7 +74,7 @@ public class MiddleTierResource {
     @Path("/rss/user/{user}")
     @Produces({MediaType.APPLICATION_JSON})
     public Response fetchSubscriptions (final @PathParam("user") String user) {
-
+    	
         // Start timer
         Stopwatch stopwatch = getRSSStatsTimer.start();
 

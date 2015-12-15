@@ -15,6 +15,8 @@
  */
 package com.netflix.recipes.rss.server;
 
+import io.netty.channel.ChannelFuture;
+
 import java.io.Closeable;
 
 import com.google.common.io.Closeables;
@@ -36,7 +38,7 @@ public class BaseNettyServer implements Closeable {
         LoggingConfiguration.getInstance().configure();
     }
 
-    public NettyServer nettyServer;
+    public ChannelFuture nettyServerFuture;
     public final KaryonServer karyonServer;
 
     public String host;
@@ -62,7 +64,7 @@ public class BaseNettyServer implements Closeable {
 
         final PackagesResourceConfig rcf = new PackagesResourceConfig(ConfigurationManager.getConfigInstance().getString("jersey.resources.package","not-found-in-configuration"));
 
-        nettyServer = NettyServer
+        nettyServerFuture = NettyServer
                 .builder()
                 .host(host)
                 .port(port)
@@ -80,7 +82,6 @@ public class BaseNettyServer implements Closeable {
     }
 
     public void close() {
-        Closeables.closeQuietly(nettyServer);
         Closeables.closeQuietly(karyonServer);
         LoggingConfiguration.getInstance().stop();
     }

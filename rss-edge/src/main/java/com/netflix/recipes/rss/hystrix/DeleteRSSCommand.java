@@ -35,6 +35,7 @@ import java.net.URI;
  */
 public class DeleteRSSCommand extends HystrixCommand<String> {
 
+	private String username = null;
     // RSS Feed Url (encoded)
     private final String url;
 
@@ -49,6 +50,18 @@ public class DeleteRSSCommand extends HystrixCommand<String> {
         this.url = url;
     }
 
+    public DeleteRSSCommand(String username, String url) {
+        super (
+            Setter.withGroupKey(
+                HystrixCommandGroupKey.Factory.asKey(RSSConstants.HYSTRIX_RSS_MUTATIONS_GROUP))
+                .andCommandKey(HystrixCommandKey.Factory.asKey(RSSConstants.HYSTRIX_RSS_DEL_COMMAND_KEY))
+                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey(RSSConstants.HYSTRIX_RSS_THREAD_POOL)
+					)
+			  );
+		this.username = username;
+		this.url = url;
+	}
+
 	@Override
 	protected String run() {
 		try {
@@ -56,15 +69,28 @@ public class DeleteRSSCommand extends HystrixCommand<String> {
 			// configuration specified in the edge.properties file
 			RestClient client = (RestClient) ClientFactory.getNamedClient(RSSConstants.MIDDLETIER_REST_CLIENT);
 
-			HttpClientRequest request = HttpClientRequest
+			HttpClientRequest request;
+			if (this.username == null) {
+				request = HttpClientRequest
 					.newBuilder()
 					.setVerb(Verb.DELETE)
 					.setUri(new URI("/"
-                            + RSSConstants.MIDDLETIER_WEB_RESOURCE_ROOT_PATH
-                            + RSSConstants.RSS_ENTRY_POINT
-                            + "?url=" + url)
-                    )
+								+ RSSConstants.MIDDLETIER_WEB_RESOURCE_ROOT_PATH
+								+ RSSConstants.RSS_ENTRY_POINT
+								+ "?url=" + url)
+						   )
 					.build();
+			} else {
+				request = HttpClientRequest
+					.newBuilder()
+					.setVerb(Verb.DELETE)
+					.setUri(new URI("/"
+								+ RSSConstants.MIDDLETIER_WEB_RESOURCE_ROOT_PATH
+								+ RSSConstants.RSS_ENTRY_POINT.replaceAll("rss/user/default","rss/user/"+this.username)
+								+ "?url=" + url)
+						   )
+					.build();
+			}
 			HttpClientResponse response = client.executeWithLoadBalancer(request);
 
 			return IOUtils.toString(response.getRawEntity(), Charsets.UTF_8);
@@ -75,7 +101,6 @@ public class DeleteRSSCommand extends HystrixCommand<String> {
 
 	@Override
 	protected String getFallback() {
-        // Empty json
-		return "{}";
+		return "An error occurred while deleting feed";
 	}
 }
